@@ -1,22 +1,18 @@
 'use client'
 import { useState } from 'react';
-import { useCompletion } from 'ai/react';
 import axios from 'axios';
 
 export default function Chat() {
   const [fileId, setFileId] = useState('');
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
   const [isFileIndexed, setIsFileIndexed] = useState(false);
-  const { completion, complete } = useCompletion({
-    api: '/api',
-  });
+  const [query, setQuery] = useState('');
+  const [answer, setAnswer] = useState('');
 
-  
   const handleDownload = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post('/api/download', { fileId });
-      console.log(response);
       if (response.status === 200) {
         setIsFileDownloaded(true);
       } else {
@@ -30,7 +26,7 @@ export default function Chat() {
 
   const handleIndex = async () => {
     try {
-      const response = await axios.post('/api', { action: 'index', fileId });
+      const response = await axios.post('/api/index');
       if (response.status === 200) {
         setIsFileIndexed(true);
       } else {
@@ -44,8 +40,13 @@ export default function Chat() {
 
   const handleQuery = async (e) => {
     e.preventDefault();
-    const query = e.target.query.value;
-    await complete(JSON.stringify({ action: 'query', query }));
+    try {
+      const response = await axios.post('/api/query', { query });
+      setAnswer(response.data.result);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to get answer');
+    }
   };
 
   return (
@@ -72,7 +73,8 @@ export default function Chat() {
         <form onSubmit={handleQuery} className="mb-4">
           <input
             type="text"
-            name="query"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your question"
             className="border p-2 mr-2"
           />
@@ -81,10 +83,10 @@ export default function Chat() {
           </button>
         </form>
       )}
-      {completion && (
+      {answer && (
         <div className="mt-4">
           <h2 className="text-xl font-bold">Answer:</h2>
-          <p>{completion}</p>
+          <p>{answer}</p>
         </div>
       )}
     </div>

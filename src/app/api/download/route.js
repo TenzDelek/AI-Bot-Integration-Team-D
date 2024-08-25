@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
+import { Utils } from '@/utils/urlshort';
 
 const drive = google.drive({
   version: 'v3',
@@ -14,13 +15,14 @@ const drive = google.drive({
 export const POST = async (req) => {
   try {
     const { fileId } = await req.json();
-
+    const fileid=Utils(fileId);
+    console.log(fileid)
     const timestamp = Date.now();
     const filePath = path.join(process.cwd(), 'temp', `document-${timestamp}.pdf`);
     const fileStream = fs.createWriteStream(filePath);
 
     const driveStream = await drive.files.get({
-      fileId: fileId,
+      fileId: fileid,
       alt: 'media',
     }, { responseType: 'stream' });
 
