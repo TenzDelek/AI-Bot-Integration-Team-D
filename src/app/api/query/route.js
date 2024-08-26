@@ -1,46 +1,40 @@
-import { RetrievalQA } from "langchain/chains";
-import { PineconeStore } from "@langchain/pinecone";
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { Pinecone } from '@pinecone-database/pinecone';
-import { NextResponse } from 'next/server';
 
-const initPinecone = async () => {
-  const pinecone = new Pinecone();
-  await pinecone.init({
-    environment: process.env.PINECONE_ENVIRONMENT,
-    apiKey: process.env.PINECONE_API_KEY,
-  });
-  return pinecone;
+import { callChain } from "@/utils/langchain";
+import {  NextResponse } from "next/server";
+
+
+const formatMessage = (message) => {
+  return `${message.role === "user" ? "Human" : "Assistant"}: ${
+    message.content
+  }`;
 };
 
 export async function POST(req) {
+  const body = await req.json();
+  const messages = body.messages ?? [];
+  console.log("Messages ", messages);
+  const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
+  const question = messages[messages.length - 1].content;
+
+  console.log("Chat history ", formattedPreviousMessages.join("\n"));
+
+  if (!question) {
+    return NextResponse.json("Error: No question in the request", {
+      status: 400,
+    });
+  }
+
   try {
-    const { query } = await req.json();
-
-    const pinecone = await initPinecone();
-    const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
-
-    const embeddings = new GoogleGenerativeAIEmbeddings({
-      apiKey: process.env.GOOGLE_API_KEY,
+    const streamingTextResponse = callChain({
+      question,
+      chatHistory: formattedPreviousMessages.join("\n"),
     });
 
-    const vectorStore = await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex: index });
-
-    const model = new ChatGoogleGenerativeAI({
-      modelName: "gemini-pro",
-      apiKey: process.env.GOOGLE_API_KEY,
-    });
-
-    const chain = RetrievalQA.fromLLM(model, vectorStore.asRetriever());
-
-    const response = await chain.call({
-      query: query,
-    });
-
-    return NextResponse.json({ result: response.text }, { status: 200 });
+    return streamingTextResponse;
   } catch (error) {
-    console.error('Error performing RAG:', error);
-    return NextResponse.json({ error: 'Failed to perform RAG' }, { status: 500 });
+    console.error("Internal server error ", error);
+    return NextResponse.json("Error: Something went wrong. Try again!", {
+      status: 500,
+    });
   }
 }
