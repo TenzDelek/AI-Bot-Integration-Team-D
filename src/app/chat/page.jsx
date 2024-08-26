@@ -8,9 +8,13 @@ export default function Chat() {
   const [isFileIndexed, setIsFileIndexed] = useState(false);
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isIndexing, setIsIndexing] = useState(false);
+  const [isQuerying, setIsQuerying] = useState(false);
 
   const handleDownload = async (e) => {
     e.preventDefault();
+    setIsDownloading(true);
     try {
       const response = await axios.post('/api/download', { fileId });
       if (response.status === 200) {
@@ -21,10 +25,13 @@ export default function Chat() {
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to download file');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   const handleIndex = async () => {
+    setIsIndexing(true);
     try {
       const response = await axios.post('/api/index');
       if (response.status === 200) {
@@ -35,17 +42,22 @@ export default function Chat() {
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to index file');
+    } finally {
+      setIsIndexing(false);
     }
   };
 
   const handleQuery = async (e) => {
     e.preventDefault();
+    setIsQuerying(true);
     try {
       const response = await axios.post('/api/query', { query });
       setAnswer(response.data.result);
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to get answer');
+    } finally {
+      setIsQuerying(false);
     }
   };
 
@@ -60,13 +72,21 @@ export default function Chat() {
           placeholder="Enter Google Drive File ID"
           className="border text-black p-2 mr-2"
         />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Download File
+        <button 
+          type="submit" 
+          className="bg-blue-500 text-white p-2 rounded"
+          disabled={isDownloading}
+        >
+          {isDownloading ? 'Downloading...' : 'Download File'}
         </button>
       </form>
       {isFileDownloaded && !isFileIndexed && (
-        <button onClick={handleIndex} className="bg-green-500 text-white p-2 rounded mb-4">
-          Index Document
+        <button 
+          onClick={handleIndex} 
+          className="bg-green-500 text-white p-2 rounded mb-4"
+          disabled={isIndexing}
+        >
+          {isIndexing ? 'Indexing...' : 'Index Document'}
         </button>
       )}
       {isFileIndexed && (
@@ -78,8 +98,12 @@ export default function Chat() {
             placeholder="Enter your question"
             className="border p-2 mr-2"
           />
-          <button type="submit" className="bg-purple-500 text-white p-2 rounded">
-            Ask Question
+          <button 
+            type="submit" 
+            className="bg-purple-500 text-white p-2 rounded"
+            disabled={isQuerying}
+          >
+            {isQuerying ? 'Asking...' : 'Ask Question'}
           </button>
         </form>
       )}
