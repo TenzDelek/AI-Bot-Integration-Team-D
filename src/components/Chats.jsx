@@ -7,11 +7,12 @@ import { useRef, useEffect } from "react";
 
 export function MainChat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: "api/query",
+    api: "/api/query",
     onError: (e) => {
-      console.log(e);
+      console.error('Chat error:', e);
     },
   });
+
   const chatParent = useRef(null);
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function MainChat() {
       <section className="p-4">
         <form
           onSubmit={handleSubmit}
-          className="flex  w-full max-w-3xl mx-auto items-center"
+          className="flex w-full max-w-3xl mx-auto items-center"
         >
           <Input
             className="flex-1 text-black min-h-[40px]"
