@@ -1,11 +1,11 @@
 'use client'
 import { useState } from 'react';
 import axios from 'axios';
-
+import { MainChat } from '@/components/Chats';
 export default function Chat() {
   const [fileId, setFileId] = useState('');
-  const [isFileDownloaded, setIsFileDownloaded] = useState(false);
-  const [isFileIndexed, setIsFileIndexed] = useState(false);
+  const [isFileDownloaded, setIsFileDownloaded] = useState(true);
+  const [isFileIndexed, setIsFileIndexed] = useState(true);
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -47,22 +47,25 @@ export default function Chat() {
     }
   };
 
-  const handleQuery = async (e) => {
-    e.preventDefault();
-    setIsQuerying(true);
-    try {
-      const response = await axios.post('/api/query', { query });
-      setAnswer(response.data.result);
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to get answer');
-    } finally {
-      setIsQuerying(false);
-    }
-  };
+  // const handleQuery = async (e) => {
+  //   e.preventDefault();
+  //   setIsQuerying(true);
+  //   try {
+  //     const response = await axios.post('/api/query', { 
+  //       messages: [{ role: 'user', content: query }]
+  //     });
+  //     setAnswer(response.data.result);
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     alert('Failed to get answer');
+  //   } finally {
+  //     setIsQuerying(false);
+  //   }
+  // };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className=' flex mx-auto h-screen w-full items-center justify-center'>
+    <div className=" flex-1 container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">RAG with Google Drive and Pinecone</h1>
       <form onSubmit={handleDownload} className="mb-4">
         <input
@@ -89,14 +92,14 @@ export default function Chat() {
           {isIndexing ? 'Indexing...' : 'Index Document'}
         </button>
       )}
-      {isFileIndexed && (
+      {/* {isFileIndexed && (
         <form onSubmit={handleQuery} className="mb-4">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your question"
-            className="border p-2 mr-2"
+            className="border text-black p-2 mr-2"
           />
           <button 
             type="submit" 
@@ -106,13 +109,20 @@ export default function Chat() {
             {isQuerying ? 'Asking...' : 'Ask Question'}
           </button>
         </form>
-      )}
-      {answer && (
+      )} */}
+
+    
+      {/* {answer && (
         <div className="mt-4">
           <h2 className="text-xl font-bold">Answer:</h2>
           <p>{answer}</p>
         </div>
-      )}
+      )} */}
+    </div>
+
+<div className=' flex-1'>
+<MainChat/>
+</div>
     </div>
   );
 }
