@@ -1,141 +1,82 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import { useState } from "react";
+import axios from "axios";
+import Mainchattt from "@/components/Chats";
 
-export default function Home() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hello, I am Rate My Professor Support Assistant. How can I help you today?",
-    },
-  ]);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+export default function Chat() {
+  const [fileId, setFileId] = useState("");
+  const [isFileDownloaded, setIsFileDownloaded] = useState(false);
+  const [isFileIndexed, setIsFileIndexed] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isIndexing, setIsIndexing] = useState(false);
 
-  const sendMessage = async () => {
-    if (message.trim() === "") return; // Prevent sending empty messages
-    setLoading(true);
-    setMessage("");
-    setMessages((messages) => [
-      ...messages,
-      { role: "user", content: message },
-      { role: "assistant", content: "" },
-    ]);
-
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    setIsDownloading(true);
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([...messages, { role: "user", content: message }]),
-      });
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      let result = "";
-      await reader.read().then(function processText({ done, value }) {
-        if (done) return result;
-
-        const text = decoder.decode(value || new Uint8Array(), {
-          stream: true,
-        });
-
-        setMessages((messages) => {
-          const updatedMessages = [...messages];
-          const lastMessage = updatedMessages[updatedMessages.length - 1];
-          lastMessage.content += text;
-          return updatedMessages;
-        });
-
-        return reader.read().then(processText);
-      });
+      const response = await axios.post("/api/download", { fileId });
+      if (response.status === 200) {
+        setIsFileDownloaded(true);
+      } else {
+        throw new Error("Failed to download file");
+      }
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setMessages((messages) => [
-        ...messages,
-        {
-          role: "assistant",
-          content: "Sorry, something went wrong. Please try again.",
-        },
-      ]);
+      console.error("Error:", error);
+      alert("Failed to download file");
     } finally {
-      setLoading(false);
-      scrollToBottom();
+      setIsDownloading(false);
     }
   };
-
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" && !loading) {
-      sendMessage();
+  const handleIndex = async () => {
+    setIsIndexing(true);
+    try {
+      const response = await axios.post("/api/index");
+      if (response.status === 200) {
+        setIsFileIndexed(true);
+      } else {
+        throw new Error("Failed to index file");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to index file");
+    } finally {
+      setIsIndexing(false);
     }
   };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold text-center py-4 bg-blue-500 text-white">
-        Search For Professor of Your Type
-      </h1>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`${
-                message.role === "user" ? "text-right" : "text-left"
-              }`}
-            >
-              <div
-                className={`inline-block p-2 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-black"
-                }`}
-              >
-                <ReactMarkdown>{message.content}</ReactMarkdown>
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="text-left">
-              <div className="inline-block p-2 rounded-lg bg-gray-200 text-black animate-pulse">
-                Thinking...
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-      <div className="p-4 bg-white">
-        <div className="flex">
+    <div className=" flex h-screen w-full items-center justify-center">
+      <div className=" flex-1 container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">
+          RAG with Google Drive and Pinecone
+        </h1>
+        <form onSubmit={handleDownload} className="mb-4">
           <input
             type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-            className="flex-1 text-black p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Type your message..."
+            value={fileId}
+            onChange={(e) => setFileId(e.target.value)}
+            placeholder="Enter Google Drive File ID"
+            className="border text-black p-2 mr-2"
           />
           <button
-            onClick={sendMessage}
-            disabled={loading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="submit"
+            className="bg-blue-500 text-white p-2 rounded"
+            disabled={isDownloading}
           >
-            Send
+            {isDownloading ? "Downloading..." : "Download File"}
           </button>
-        </div>
+        </form>
+        {isFileDownloaded && !isFileIndexed && (
+          <button
+            onClick={handleIndex}
+            className="bg-green-500 text-white p-2 rounded mb-4"
+            disabled={isIndexing}
+          >
+            {isIndexing ? "Indexing..." : "Index Document"}
+          </button>
+        )}
+      </div>
+      <div className=" flex-1">
+        <Mainchattt/>
       </div>
     </div>
   );
