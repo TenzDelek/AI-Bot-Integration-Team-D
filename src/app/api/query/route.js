@@ -17,7 +17,7 @@ export async function POST(req) {
   const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
   });
-  const index = pc.Index("raggdrive");
+  const index = pc.Index("mainrag1").namespace("ns1");
   const openai = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -36,9 +36,10 @@ export async function POST(req) {
   });
 
   const contextFromResults = results.matches.map((match) => ({
+    id: match.id || "N/A", 
+    source:match.metadata["source"] || "N/A",
     author: match.metadata["pdf.info.Author"] || "N/A",
-    creationDate: match.metadata["pdf.info.CreationDate"] || "N/A",
-    text: match.metadata.text || "N/A",
+    page: match.metadata["text"] || "N/A",
   }));
 
   const lastMessage = data[data.length - 1];
