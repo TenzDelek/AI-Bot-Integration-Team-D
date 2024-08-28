@@ -6,8 +6,7 @@ export default function Mainchattt() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Hello, I am your RAG Assistant. How can I help you today?",
+      content: "Hello, I am your RAG Assistant. How can I help you today?",
     },
   ]);
   const [message, setMessage] = useState("");
@@ -18,10 +17,9 @@ export default function Mainchattt() {
     if (message.trim() === "") return; // Prevent sending empty messages
     setLoading(true);
     setMessage("");
-    setMessages((messages) => [
-      ...messages,
+    setMessages((prevMessages) => [
+      ...prevMessages,
       { role: "user", content: message },
-      { role: "assistant", content: "" },
     ]);
 
     try {
@@ -33,30 +31,20 @@ export default function Mainchattt() {
         body: JSON.stringify([...messages, { role: "user", content: message }]),
       });
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      let result = "";
-      await reader.read().then(function processText({ done, value }) {
-        if (done) return result;
+      const data = await response.json();
 
-        const text = decoder.decode(value || new Uint8Array(), {
-          stream: true,
-        });
-
-        setMessages((messages) => {
-          const updatedMessages = [...messages];
-          const lastMessage = updatedMessages[updatedMessages.length - 1];
-          lastMessage.content += text;
-          return updatedMessages;
-        });
-
-        return reader.read().then(processText);
-      });
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "assistant", content: data.response },
+      ]);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setMessages((messages) => [
-        ...messages,
+      setMessages((prevMessages) => [
+        ...prevMessages,
         {
           role: "assistant",
           content: "Sorry, something went wrong. Please try again.",
@@ -69,7 +57,8 @@ export default function Mainchattt() {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === "Enter" && !loading) {
+    if (event.key === "Enter" && !event.shiftKey && !loading) {
+      event.preventDefault();
       sendMessage();
     }
   };
@@ -82,13 +71,12 @@ export default function Mainchattt() {
     scrollToBottom();
   }, [messages]);
 
-
   return (
-    <div className="flex rounded-md overflow-hidden flex-col h-screen bg-gray-100">
-      <h1 className="text-xl font-bold text-center py-4 bg-blue-500 text-white">
+    <div className="flex border-[#27272A] overflow-hidden flex-col h-screen border-[1px]">
+      <h1 className="text-sm border-b border-[#27272A] text-center py-4  text-white">
         RAG with Google Drive and Pinecone
       </h1>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 text-sm overflow-y-auto p-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
             <div
@@ -100,8 +88,8 @@ export default function Mainchattt() {
               <div
                 className={`inline-block p-2 rounded-lg ${
                   message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-black"
+                    ? "bg-[#27272A]  text-white"
+                    : "border border-[#27272A] text-[#FAFAFA]"
                 }`}
               >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -118,21 +106,21 @@ export default function Mainchattt() {
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="p-4 bg-white">
+      <div className="p-4 border-[#27272A] border">
         <div className="flex">
-          <input
-            type="text"
+          <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading}
-            className="flex-1 text-black p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 text-black p-2 border rounded-l-lg resize-none"
             placeholder="Type your message..."
+            rows="1"
           />
           <button
             onClick={sendMessage}
             disabled={loading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className=" text-white border border-[#27272A] px-4 py-2 rounded-r-lg outline-none "
           >
             Send
           </button>

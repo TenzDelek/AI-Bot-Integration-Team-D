@@ -3,5 +3,20 @@
 @tailwind utilities;
 
 body {
-  @apply bg-black text-white
+  @apply bg-[#09090B] text-white
+}
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+ 
+  border-radius:8px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #27272A; 
+  border-radius: 8px;
 }

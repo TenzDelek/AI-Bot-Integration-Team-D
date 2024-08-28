@@ -7,11 +7,8 @@ export default function Chat() {
   const [fileId, setFileId] = useState("");
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
   const [isFileIndexed, setIsFileIndexed] = useState(false);
-  const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isIndexing, setIsIndexing] = useState(false);
-  const [isQuerying, setIsQuerying] = useState(false);
 
   const handleDownload = async (e) => {
     e.preventDefault();
