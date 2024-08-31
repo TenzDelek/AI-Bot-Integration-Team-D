@@ -17,7 +17,7 @@ export async function POST(req) {
   const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
   });
-  const index = pc.Index("mainrag1").namespace("ns1");
+  const index = pc.Index("demorag2").namespace("ns1");
   const openai = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY,
